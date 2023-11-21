@@ -1476,7 +1476,7 @@ end
 
 H.get_matched_nodes_builtin = function(captures)
   -- Fetch treesitter data for buffer
-  local lang = vim.bo.filetype
+  local lang = vim.treesitter.language.get_lang(vim.bo.filetype) or vim.bo.filetype
   local ok, parser = pcall(vim.treesitter.get_parser, 0, lang)
   if not ok then H.error_treesitter('parser', lang) end
 
