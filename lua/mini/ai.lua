@@ -772,17 +772,17 @@ MiniAi.gen_spec.argument = function(opts)
 
   res[3] = {
     -- First argument. Include right separator, exclude left whitespace.
-    { match_and_include('bracket', false, 'separator', true), extract_first_arg },
+    { match_and_include('bracket', false, 'separator', true),   extract_first_arg },
 
     -- Middle argument. Include only left separator.
     { match_and_include('separator', true, 'separator', false), extract_nonfirst_arg },
 
     -- Last argument. Include left separator, exclude right whitespace.
     -- NOTE: it misbehaves for whitespace argument. It's OK because it's rare.
-    { match_and_include('separator', true, 'bracket', false), extract_nonfirst_arg },
+    { match_and_include('separator', true, 'bracket', false),   extract_nonfirst_arg },
 
     -- Single argument. Include both whitespace (makes `aa` and `ia` differ).
-    { match_and_include('bracket', false, 'bracket', false), extract_single_arg },
+    { match_and_include('bracket', false, 'bracket', false),    extract_single_arg },
   }
 
   return res
@@ -839,7 +839,7 @@ MiniAi.gen_spec.pair = function(left, right, opts)
 
   if (opts.type == 'balanced' or opts.type == 'greedy') and not (left:len() == 1 and right:len() == 1) then
     local msg =
-      string.format([[Both `left` and `right` should be single character for `opts.type == '%s'`.]], opts.type)
+        string.format([[Both `left` and `right` should be single character for `opts.type == '%s'`.]], opts.type)
     H.error(msg)
   end
 
@@ -933,7 +933,7 @@ MiniAi.gen_spec.treesitter = function(ai_captures, opts)
     local target_captures = ai_captures[ai_type]
     local has_nvim_treesitter, _ = pcall(require, 'nvim-treesitter')
     local node_querier = (has_nvim_treesitter and opts.use_nvim_treesitter) and H.get_matched_nodes_plugin
-      or H.get_matched_nodes_builtin
+        or H.get_matched_nodes_builtin
     local matched_nodes = node_querier(target_captures)
 
     -- Return array of regions
@@ -1133,8 +1133,8 @@ H.apply_config = function(config)
     H.map(mode, lhs, rhs, opts)
   end
 
-  m({ 'n', 'x', 'o' }, maps.goto_left,  function() return H.expr_motion('left') end,   { desc = 'Move to left "around"' })
-  m({ 'n', 'x', 'o' }, maps.goto_right, function() return H.expr_motion('right') end,  { desc = 'Move to right "around"' })
+  m({ 'n', 'x', 'o' }, maps.goto_left, function() return H.expr_motion('left') end, { desc = 'Move to left "around"' })
+  m({ 'n', 'x', 'o' }, maps.goto_right, function() return H.expr_motion('right') end, { desc = 'Move to right "around"' })
 
   local make_tobj = function(mode, ai_type, search_method)
     return function() return H.expr_textobject(mode, ai_type, { search_method = search_method }) end
@@ -1158,7 +1158,7 @@ end
 H.is_disabled = function() return vim.g.miniai_disable == true or vim.b.miniai_disable == true end
 
 H.get_config =
-  function(config) return vim.tbl_deep_extend('force', MiniAi.config, vim.b.miniai_config or {}, config or {}) end
+    function(config) return vim.tbl_deep_extend('force', MiniAi.config, vim.b.miniai_config or {}, config or {}) end
 
 H.is_search_method = function(x, x_name)
   x = x or H.get_config().search_method
@@ -1219,17 +1219,17 @@ H.expr_textobject = function(mode, ai_type, opts)
 
   -- Make expression
   return '<Cmd>lua '
-    .. string.format(
-      [[MiniAi.select_textobject('%s', '%s', { search_method = '%s', n_times = %d, reference_region = %s, operator_pending = %s, vis_mode = %s })]],
-      ai_type,
-      vim.fn.escape(tobj_id, "'"),
-      opts.search_method,
-      vim.v.count1,
-      reference_region_field,
-      operator_pending_field,
-      vis_mode_field
-    )
-    .. '<CR>'
+      .. string.format(
+        [[MiniAi.select_textobject('%s', '%s', { search_method = '%s', n_times = %d, reference_region = %s, operator_pending = %s, vis_mode = %s })]],
+        ai_type,
+        vim.fn.escape(tobj_id, "'"),
+        opts.search_method,
+        vim.v.count1,
+        reference_region_field,
+        operator_pending_field,
+        vis_mode_field
+      )
+      .. '<CR>'
 end
 
 H.expr_motion = function(side)
@@ -1246,13 +1246,13 @@ H.expr_motion = function(side)
 
   -- Make expression for moving cursor
   return '<Cmd>lua '
-    .. string.format(
-      [[MiniAi.move_cursor('%s', 'a', '%s', { n_times = %d })]],
-      side,
-      vim.fn.escape(tobj_id, "'"),
-      vim.v.count1
-    )
-    .. '<CR>'
+      .. string.format(
+        [[MiniAi.move_cursor('%s', 'a', '%s', { n_times = %d })]],
+        side,
+        vim.fn.escape(tobj_id, "'"),
+        vim.v.count1
+      )
+      .. '<CR>'
 end
 
 -- Work with textobject info --------------------------------------------------
@@ -1480,8 +1480,9 @@ H.get_matched_nodes_builtin = function(captures)
   local ok, parser = pcall(vim.treesitter.get_parser, 0, lang)
   if not ok then H.error_treesitter('parser', lang) end
 
-  local query = vim.treesitter.get_query(lang, 'textobjects')
-  if query == nil then H.error_treesitter('query', lang) end
+  local query = vim.treesitter.query.get(lang, 'textobjects')
+  -- if query == nil then H.error_treesitter('query', lang) end
+  if query == nil then return {} end
 
   -- Compute matched captures
   captures = vim.tbl_map(function(x) return x:sub(2) end, captures)
@@ -1741,7 +1742,7 @@ H.extract_span = function(s, extract_pattern, ai_type)
   local is_valid_positions = is_all_numbers and (#positions == 2 or #positions == 4)
   if not is_valid_positions then
     local msg = 'Could not extract proper positions (two or four empty captures) from '
-      .. string.format([[string '%s' with extraction pattern '%s'.]], s, extract_pattern)
+        .. string.format([[string '%s' with extraction pattern '%s'.]], s, extract_pattern)
     H.error(msg)
   end
 
